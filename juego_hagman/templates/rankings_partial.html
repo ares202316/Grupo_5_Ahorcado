@@ -1,0 +1,11 @@
+{% for ranking in rankings %}
+    <tr>
+        <td>{{ ranking.usuario }}</td>
+        <td>{{ ranking.palabra }}</td>
+        <td>{{ ranking.tiempo }}</td>
+    </tr>
+{% empty %}
+    <tr>
+        <td colspan="3">No hay rankings disponibles.</td>
+    </tr>
+{% endfor %}

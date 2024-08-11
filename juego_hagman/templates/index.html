@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hangman Game</title>
+    {% load static %}
+    <style>
+        * {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #040404;
+    color: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+}
+
+h1 {
+    
+    font-size: 3em;
+            margin-bottom: 5px;
+            color: #fff;
+            text-shadow: 0 0 5px #0f0, 0 0 10px #0f0, 0 0 20px #0f0;
+}
+
+.game-container {
+    padding: 20px 30px;
+    position: relative;
+    margin: auto;
+    height: 350px;
+    width: 450px;
+}
+
+.figure-container {
+    fill: transparent;
+    stroke: #fff;
+    stroke-width: 4px;
+    stroke-linecap: round;
+}
+
+.figure-part {
+    display: none;
+}
+
+.wrong-letters-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+}
+
+.wrong-letters-container p {
+    margin: 0 0 5px;
+}
+
+.wrong-letters-container span {
+    font-size: 24px;
+}
+
+.word {
+    display: flex;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.letter {
+    border-bottom: 3px solid #2980b9;
+    display: inline-flex;
+    font-size: 30px;
+    align-items: center;
+    margin: 0 3px;
+    height: 50px;
+    width: 20px;
+}
+
+.popup-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.popup {
+    background: #111;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.8); /* Efecto neón rojo */
+    color: #fff;
+}
+
+.popup h2 {
+    margin-bottom: 20px;
+    font-family: 'Arial', sans-serif;
+    font-size: 24px;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.8); /* Efecto neón en el texto */
+}
+
+#play-button2 {
+    background: #000;
+    color: #f00; /* Rojo para el neón */
+    border: 2px solid #f00;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+    text-shadow: 0 0 5px #f00; /* Efecto neón en el texto del botón */
+    transition: background 0.3s, color 0.3s;
+}
+
+#play-button2:hover {
+    background: #f00;
+    color: #000;
+}
+
+.notification-container {
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 10px 10px 0 0;
+    padding: 15px 20px;
+    position: absolute;
+    bottom: -50px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.notification-container p {
+    margin: 0;
+}
+
+.notification-container.show {
+    transform: translateY(-50px);
+}
+
+/* index*/
+.button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.button {
+    display: inline-block;
+    width: 200px;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    padding: 15px 30px;
+    margin: 10px 0;
+    font-size: 1.2em;
+    color: #4f345a;
+    text-decoration: none;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 5px #0f0, 0 0 10px #0f0, 0 0 20px #0f0;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    text-align: center;
+}
+.button:hover {
+    background-color: #fff;
+    color: #0f0;
+    box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff;
+}
+
+/* Modal (background) */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+/* Neon effect for Modal Content */
+.modal-content {
+    background-color: #111;
+    color: #fff;
+    margin: 15% auto;
+    padding: 20px;
+    border: none;
+    width: 80%;
+    text-align: center;
+    box-shadow: 0 0 20px #00e6e6, 0 0 30px #00e6e6, 0 0 40px #00e6e6, 0 0 50px #00e6e6, 0 0 60px #00e6e6;
+}
+
+.modal-content2 {
+    background-color: #111;
+    color: #fff;
+    margin: 15% auto;
+    padding: 20px;
+    border: none;
+    width: 80%;
+    text-align: center;
+    box-shadow: 0 0 20px #dde411, 0 0 30px #dde411, 0 0 40px #dde411, 0 0 50px #dde411, 0 0 60px #dde411;
+}
+
+/* The Close Button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Neon effect for Close Button */
+.close {
+    text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000, 0 0 30px #ff0000;
+}
+
+
+.input-container {
+    margin-bottom: 20px;
+}
+
+.styled-input {
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    max-width: 300px;
+    box-sizing: border-box;
+}
+
+.styled-input:focus {
+    border-color: #333;
+    outline: none;
+}
+
+
+/* Avatar container */
+/* Avatar container */
+.avatar-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* Avatar circle */
+.avatar-circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background-color: #ccc;
+    margin: 0 auto 10px;
+    background-size: cover;
+    background-position: center;
+}
+
+/* Avatar gallery */
+.avatar-gallery {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* Individual avatar options */
+.avatar-option {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border 0.3s ease;
+}
+
+.avatar-option:hover {
+    border: 2px solid #00e6e6;
+}
+
+
+/* Sound toggle button */
+.sound-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.sound-toggle {
+    padding: 10px 20px;
+    background-color: #00e6e6;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 5px;
+    box-shadow: 0 0 10px #00e6e6, 0 0 20px #00e6e6, 0 0 30px #00e6e6;
+}
+
+.sound-toggle:hover {
+    background-color: #00cccc;
+}
+
+#soundToggleBtn{
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+}
+
+.selection-popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.selection-content {
+    background: #111;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(203, 118, 242, 0.8); /* Efecto neón */
+    color: #fff;
+}
+
+.selection-content h2 {
+    margin-bottom: 20px;
+    font-family: 'Arial', sans-serif;
+    font-size: 24px;
+    text-shadow: 0 0 10px rgba(203, 118, 242, 0.8) /* Efecto neón en el texto */
+}
+
+.selection-button {
+    background: #000;
+    color: rgb(255, 255, 255);
+    border: 2px solid rgb(221, 0, 255);
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 10px;
+    text-shadow: 0 0 5px rgb(216, 32, 225); /* Efecto neón en el texto del botón */
+    transition: background 0.3s, color 0.3s;
+}
+
+.selection-button:hover {
+    background: rgb(235, 33, 246);
+    color: #fff;
+}
+
+/* Estilo para el botón de regresar al índice */
+#index-button {
+    background: #000;
+    color: #00f; /* Azul para el neón */
+    border: 2px solid #00f;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+    text-shadow: 0 0 5px #00f; /* Efecto neón en el texto del botón */
+    transition: background 0.3s, color 0.3s;
+}
+
+#index-button:hover {
+    background: #00f;
+    color: #000;
+}
+
+/* Estilo para el temporizador */
+#timer-container {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 0, 0, 0.8); /* Efecto neón rojo para el temporizador */
+}
+
+
+
+
+    </style>
+</head>
+<body>
+    <h1>Bienvenidos al Horcado</h1>
+    <div class="avatar-container">
+        <h2>Selecciona tu avatar </h2>
+        <div class="avatar-circle" id="avatarCircle"></div>
+        <div class="avatar-gallery">
+            <img src="{% static 'images/avatars/avatar1.jpg' %}" alt="Avatar 1" class="avatar-option" data-avatar="avatar1.jpg">
+            <img src="{% static 'images/avatars/avatar2.jpg' %}" alt="Avatar 2" class="avatar-option" data-avatar="avatar2.jpg">
+            <img src="{% static 'images/avatars/avatar3.jpg' %}" alt="Avatar 3" class="avatar-option" data-avatar="avatar3.jpg">
+            <!-- Add more avatars as needed -->
+        </div>
+    </div>
+    
+  
+    <div class="input-container">
+        <input type="text" id="username" placeholder="Ingrese su nombre" class="styled-input">
+    </div>
+
+    <div class="button-container">
+        <a href="{% url 'juego' %}" class="button" id="play-button">Jugar</a>
+        <a href="#" class="button" id="helpBtn">Ayuda</a>
+        <a href="#" class="button" id="rankingsBtn">Rankings</a>
+        <a href="#" class="button" id="infoBtn">Información</a>
+    </div>
+
+    <!-- Error Modal HTML -->
+    <div id="errorModal" class="modal">
+        <div class="modal-content2 neon-red">
+            <span class="close" id="closeErrorModal">&times;</span>
+            <p>Por favor, ingrese su nombre para jugar.</p>
+        </div>
+    </div>
+
+    <!-- Modal HTML -->
+    
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <h2>¿Como jugar?</h2>
+            <span class="close" id="closeAyuda">&times;</span>
+            <p>El objetivo del juego es adivinar la palabra secreta letra por letra. Tienes un número limitado de intentos. Cada vez que adivinas una letra incorrecta, se dibuja una parte del ahorcado. Si el dibujo del ahorcado se completa antes de adivinar la palabra, pierdes.</p>
+        </div>
+    </div>
+
+   <!-- Rankings Modal HTML -->
+<div id="rankingsModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeRankingsModal">&times;</span>
+        <h2>Top Rankings</h2>
+        <table id="rankingsTable" style="width: 100%; color: #fff; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th>USUARIO</th>
+                    <th>PALABRA</th>
+                    <th>TIEMPO</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rankings will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+    <!-- Information Modal HTML -->
+<div id="infoModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeInfoModal">&times;</span>
+        <h2>Sobre Nosotros</h2>
+        <p>Grupo 5 br
+            Erick Fernando Robles Cruz 	202110010322 <br>
+            Irvin Leonel Lanza Meza 	201610110496 <br>
+            Zohet Abigaíl Aguirre moreno 	202210040039 <br>
+            Paola Abigail Peña Hernández 	202330080046 <br>
+            Luis Enrique Crúz Gámez 	202210010814 <br>
+            Addys Espinoza Calderon 	202210010176 <br>
+            </p>
+    </div>
+</div>
+
+ 
+
+
+    <div class="sound-container">
+        <button id="soundToggleBtn" class="sound-toggle"  data-sound="on">Sound: ON</button>
+    </div>
+
+    <audio id="gameSound" src="{% static 'audio.mp3' %}" preload="auto"></audio>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const errorModal = document.getElementById("errorModal");
+    const closeErrorModalBtn = document.getElementById("closeErrorModal");
+    const usernameInput = document.getElementById("username");
+    
+    document.getElementById('play-button').addEventListener('click', (event) => {
+        const username = usernameInput.value.trim();
+        if (!username) {
+            event.preventDefault();
+            errorModal.style.display = 'block';
+        } else {
+            // Save the username to localStorage
+            localStorage.setItem('username', username);
+        }
+    });
+
+    // Close error modal when clicking the close button
+    closeErrorModalBtn.addEventListener('click', () => {
+        errorModal.style.display = 'none';
+    });
+
+    // Close error modal when clicking outside of the modal content
+    window.addEventListener('click', (event) => {
+        if (event.target == errorModal) {
+            errorModal.style.display = 'none';
+        }
+    });
+
+    // When an avatar is clicked, update the avatar circle
+    var avatarCircle = document.getElementById("avatarCircle");
+    var avatarOptions = document.querySelectorAll(".avatar-option");
+
+    avatarOptions.forEach(function(avatar) {
+        avatar.addEventListener("click", function() {
+            var avatarSrc = this.getAttribute("data-avatar");
+            avatarCircle.style.backgroundImage = 'url(' + "{% static 'images/avatars/' %}" + avatarSrc + ')';
+        });
+    });
+
+    var gameSound = document.getElementById("gameSound");
+    var soundToggleBtn = document.getElementById("soundToggleBtn");
+
+    // Sound toggle functionality
+    soundToggleBtn.onclick = function() {
+        if (soundToggleBtn.getAttribute("data-sound") === "on") {
+            gameSound.pause();
+            soundToggleBtn.setAttribute("data-sound", "off");
+            soundToggleBtn.textContent = "Sound: OFF";
+        } else {
+            gameSound.play();
+            soundToggleBtn.setAttribute("data-sound", "on");
+            soundToggleBtn.textContent = "Sound: ON";
+        }
+    }
+
+    // Modal code for help
+    var helpModal = document.getElementById("helpModal");
+    var helpBtn = document.getElementById("helpBtn");
+    var closeHelpBtn = document.getElementById("closeAyuda"); // Usa el ID correcto aquí
+
+    helpBtn.onclick = function(event) {
+        event.preventDefault();
+        helpModal.style.display = "block";
+    }
+
+    closeHelpBtn.onclick = function() {
+        helpModal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == helpModal) {
+            helpModal.style.display = "none";
+        }
+    }
+
+
+    const rankingsModal = document.getElementById("rankingsModal");
+const closeRankingsModalBtn = document.getElementById("closeRankingsModal");
+const closeAyudabtn = document.getElementById("closeAyuda");
+
+document.getElementById('rankingsBtn').addEventListener('click', (event) => {
+    event.preventDefault();
+    fetchRankings();
+    rankingsModal.style.display = 'block';
+});
+
+// Close rankings modal when clicking the close button
+closeRankingsModalBtn.addEventListener('click', () => {
+    rankingsModal.style.display = 'none';
+});
+
+closeAyudabtn.addEventListener('click', () => {
+    rankingsModal.style.display = 'none';
+});
+
+// Close rankings modal when clicking outside of the modal content
+window.addEventListener('click', (event) => {
+    if (event.target == rankingsModal) {
+        rankingsModal.style.display = 'none';
+    }
+});
+
+// Function to fetch rankings from the server
+function fetchRankings() {
+    fetch('/get_rankings/')
+        .then(response => response.json())
+        .then(data => {
+            const rankingsTableBody = document.getElementById('rankingsTable').getElementsByTagName('tbody')[0];
+            rankingsTableBody.innerHTML = ''; // Clear the existing content
+
+            data.rankings.forEach(ranking => {
+                const row = rankingsTableBody.insertRow();
+                const usernameCell = row.insertCell(0);
+                const wordCell = row.insertCell(1);
+                const timeCell = row.insertCell(2);
+                usernameCell.textContent = ranking.username;
+                wordCell.textContent = ranking.word;
+                timeCell.textContent = ranking.time;
+            });
+        })
+        .catch(error => console.error('Error fetching rankings:', error));
+}
+    
+var infoModal = document.getElementById("infoModal");
+    var infoBtn = document.getElementById("infoBtn");
+    var closeInfoBtn = document.getElementById("closeInfoModal");
+
+    infoBtn.onclick = function(event) {
+        event.preventDefault();
+        infoModal.style.display = "block";
+    }
+
+    closeInfoBtn.onclick = function() {
+        infoModal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == infoModal) {
+            infoModal.style.display = "none";
+        }
+    }
+
+
+});
+
+
+
+
+    </script>
+
+</body>
+</html>
